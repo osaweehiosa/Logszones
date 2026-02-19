@@ -27,7 +27,7 @@ function handleSignup() {
         localStorage.setItem('currentUser', email);
         
         alert("Account created successfully!");
-        window.location.href = 'wallet.html'; 
+        window.location.href = 'wallet.html.html'; 
     } else {
         alert("Please fill in all fields.");
     }
@@ -47,7 +47,7 @@ function handleLogin() {
     if (user) {
         // Set the session for THIS specific user
         localStorage.setItem('currentUser', email);
-        window.location.href = 'wallet.html';
+        window.location.href = 'wallet.html.html';
     } else {
         alert("Invalid email or password. Please try again.");
     }
@@ -56,5 +56,5 @@ function handleLogin() {
 // Logout function
 function logout() {
     localStorage.removeItem('currentUser');
-    window.location.href = 'index.html'; // or your login page name
+    window.location.href = 'index.html.html'; // or your login page name
 }
