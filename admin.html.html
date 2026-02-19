@@ -1,52 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>LOGSZONE | Admin Panel</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>body { background-color: #020617; color: white; }</style>
-</head>
-<body class="p-10">
-    <div class="max-w-2xl mx-auto bg-slate-900 p-8 rounded-3xl border border-slate-800">
-        <h1 class="text-2xl font-bold mb-6">Admin Log Manager</h1>
-        <div class="space-y-4">
-            <input id="plat" placeholder="Platform (facebook, instagram, etc)" class="w-full bg-black p-4 rounded-xl border border-slate-700">
-            <input id="titl" placeholder="Log Title" class="w-full bg-black p-4 rounded-xl border border-slate-700">
-            <input id="pric" type="number" placeholder="Price (₦)" class="w-full bg-black p-4 rounded-xl border border-slate-700">
-            <input id="tag" placeholder="Tag (HQ, Aged, etc)" class="w-full bg-black p-4 rounded-xl border border-slate-700">
-            <button onclick="save()" class="w-full bg-blue-600 py-4 rounded-xl font-bold">Deploy to Marketplace</button>
-        </div>
-        <hr class="my-8 border-slate-800">
-        <div id="list" class="space-y-2"></div>
+<div class="max-w-xl mx-auto mt-10 p-8 midnight-card rounded-[2.5rem]">
+    <h2 class="text-2xl font-bold mb-6">Admin Panel</h2>
+    <div class="space-y-4">
+        <input id="plat" placeholder="Platform (facebook, instagram...)" class="w-full bg-slate-900 p-4 rounded-xl border border-slate-700 outline-none focus:border-blue-500">
+        <input id="title" placeholder="Public Title (e.g. 2015 USA Aged)" class="w-full bg-slate-900 p-4 rounded-xl border border-slate-700">
+        <input id="price" type="number" placeholder="Price (₦)" class="w-full bg-slate-900 p-4 rounded-xl border border-slate-700">
+        <input id="tag" placeholder="Tag (e.g. HQ, HOT, 2FA)" class="bg-slate-900 p-4 rounded-xl border border-slate-700 w-full">
+        
+        <textarea id="data" placeholder="PASTE LOG CREDENTIALS HERE (Email:Pass:Cookies)" class="w-full bg-slate-900 p-4 rounded-xl border border-slate-700 h-32"></textarea>
+        
+        <button onclick="deployLog()" class="w-full py-4 bg-blue-600 rounded-2xl font-bold hover:bg-blue-500 transition">
+            Publish to Global Market
+        </button>
     </div>
-    <script>
-        function save() {
-            const logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
-            logs.push({
-                platform: document.getElementById('plat').value,
-                title: document.getElementById('titl').value,
-                price: document.getElementById('pric').value,
-                tag: document.getElementById('tag').value
-            });
-            localStorage.setItem('shared_logs', JSON.stringify(logs));
-            location.reload();
-        }
-        function render() {
-            const logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
-            document.getElementById('list').innerHTML = logs.map((l, i) => `
-                <div class="flex justify-between p-3 bg-black rounded">
-                    <span>${l.title}</span>
-                    <button onclick="del(${i})" class="text-red-500">Delete</button>
-                </div>
-            `).join('');
-        }
-        function del(i) {
-            const logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
-            logs.splice(i, 1);
-            localStorage.setItem('shared_logs', JSON.stringify(logs));
-            render();
-        }
-        render();
-    </script>
-</body>
-</html>
+</div>
+
+<script>
+    function deployLog() {
+        const logs = JSON.parse(localStorage.getItem('global_logs')) || [];
+        const newEntry = {
+            platform: document.getElementById('plat').value,
+            title: document.getElementById('title').value,
+            price: parseInt(document.getElementById('price').value),
+            tag: document.getElementById('tag').value,
+            data: document.getElementById('data').value, // This stays hidden until purchase
+            id: Date.now()
+        };
+
+        if(!newEntry.data || !newEntry.price) return alert("Please fill all fields");
+
+        logs.push(newEntry);
+        localStorage.setItem('global_logs', JSON.stringify(logs));
+        alert("✅ Log is now LIVE for all users.");
+        
+        // Reset form
+        document.querySelectorAll('input, textarea').forEach(i => i.value = '');
+    }
+</script>
