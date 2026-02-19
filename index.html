@@ -6,12 +6,44 @@
     <title>LOGS ZONE | Premium Marketplace</title>
     <link rel="stylesheet" href="style.css.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head
+    <style>
+        /* Admin Button Styling */
+        .admin-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-right: 15px;
+            font-size: 0.8rem;
+        }
+
+        .admin-btn:hover {
+            background: var(--gradient, #007bff); /* Falls back to blue if var not defined */
+            transform: scale(1.1);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
 <body>
 
     <nav class="navbar">
         <div class="logo">LOGS<span>ZONE</span></div>
         <div class="nav-right">
+            <div class="admin-btn" onclick="checkAdminAccess()" title="Admin Access">
+                <i class="fas fa-lock"></i>
+            </div>
+
             <div class="user-trigger" id="userMenu">
                 <span>User</span>
                 <div class="avatar">
@@ -130,5 +162,16 @@
     </footer>
 
     <script src="script.js"></script>
+    <script>
+        function checkAdminAccess() {
+            const passcode = prompt("Please enter admin passcode:");
+            if (passcode === "bigL$$") {
+                // Change 'admin.html' to whatever your actual admin page is
+                window.location.href = "admin.html"; 
+            } else {
+                alert("Unavailable to user.");
+            }
+        }
+    </script>
 </body>
 </html>
