@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access | LOGS ZONE</title>
+    <link rel="stylesheet" href="auth-style.css.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="logo">LOGS<span>ZONE</span></div>
+            
+            <div id="loginForm" class="form-box">
+                <h2>Welcome Back</h2>
+                <p>Enter your details to access your logs.</p>
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="loginEmail" placeholder="Email Address">
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="loginPass" placeholder="Password">
+                </div>
+                <button class="auth-btn" onclick="handleLogin()">Login to Dashboard</button>
+                <p class="toggle-text">New here? <span onclick="toggleAuth()">Create an account</span></p>
+            </div>
+
+            <div id="signupForm" class="form-box hidden">
+                <h2>Create Account</h2>
+                <p>Join the elite network of Social Logs.</p>
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="regName" placeholder="Full Name">
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="regEmail" placeholder="Email Address">
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="regPass" placeholder="Password">
+                </div>
+                <button class="auth-btn" onclick="handleSignup()">Sign Up</button>
+                <p class="toggle-text">Already a member? <span onclick="toggleAuth()">Log In</span></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOGSZONE | Real-Time Wallet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://js.paystack.co/v1/inline.js"></script> 
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+        body { background-color: #020617; color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .btn-paystack { background: #09a5db; color: white; transition: all 0.3s ease; }
+        .btn-paystack:hover { background: #0784af; transform: translateY(-2px); }
+    </style>
+</head>
+<body class="min-h-screen bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-slate-900 via-blue-950 to-black">
+
+    <nav class="p-5 glass sticky top-0 z-50 flex justify-between items-center px-6 lg:px-20">
+        <h1 class="text-2xl font-800 tracking-tighter italic">LOGS<span class="text-blue-500">ZONE</span></h1>
+        <div class="flex items-center gap-3">
+            <span class="text-xs bg-green-500/20 text-green-400 px-3 py-1 rounded-full border border-green-500/30">Live Server</span>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto p-6 mt-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+            <div class="lg:col-span-2 bg-gradient-to-br from-blue-900 to-indigo-950 p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden border border-white/10">
+                <div class="relative z-10">
+                    <p class="text-blue-200/70 text-sm font-bold uppercase tracking-widest">Your Balance</p>
+                    <h2 class="text-6xl font-800 my-4 tracking-tighter">₦<span id="wallet-balance">0.00</span></h2>
+                    
+                    <div class="flex gap-4 mt-8">
+                        <button onclick="payWithPaystack()" class="btn-paystack px-10 py-4 rounded-2xl font-800 flex items-center gap-3 shadow-lg">
+                            <i class="fas fa-plus-circle text-xl"></i> Add Funds
+                        </button>
+                    </div>
+                </div>
+                <div class="absolute -bottom-20 -right-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+            </div>
+
+            <div class="glass p-6 rounded-[2.5rem] flex flex-col border border-white/5">
+                <h3 class="font-bold mb-4 text-slate-300 flex items-center justify-between">
+                    <span>Recent Transactions</span>
+                    <i class="fas fa-sync-alt text-xs animate-spin text-blue-500"></i>
+                </h3>
+                <div id="transaction-feed" class="space-y-4 overflow-y-auto max-h-[250px] pr-2 custom-scrollbar">
+                    <p id="no-trans" class="text-slate-500 text-sm italic text-center py-10">Waiting for first transaction...</p>
+                </div>
+            </div>
+        </div>
+
+        <section class="mt-12">
+    <div class="flex items-center justify-between mb-8 px-2">
+        <h2 class="text-2xl font-800 tracking-tight text-white uppercase">Available Logs</h2>
+        <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-full animate-pulse">
+            Live Inventory
+        </span>
+    </div>
+
+    <div id="logs-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        </div>
+</section>
+
+<script>
+    /** * INTEGRATION STEPS:
+     * 1. This script assumes your balance variable is named 'walletBalance'. 
+     * 2. It assumes your UI update function is named 'updateUI()'.
+     * 3. It assumes your transaction logger is 'logTx()'.
+     */
+
+    function renderMarketplace() {
+        const container = document.getElementById('logs-container');
+        // Get logs sent from admin.html
+        const logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
+
+        if (logs.length === 0) {
+            container.innerHTML = `
+                <div class="col-span-full p-12 text-center midnight-card rounded-[2rem] border border-dashed border-slate-800">
+                    <p class="text-slate-500">The marketplace is currently empty. Waiting for Admin updates...</p>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = logs.map((log, index) => {
+            // Automatically pick icon based on platform name
+            const icon = log.platform.toLowerCase().includes('face') ? 'fa-facebook' :
+                         log.platform.toLowerCase().includes('insta') ? 'fa-instagram' :
+                         log.platform.toLowerCase().includes('twit') ? 'fa-twitter' :
+                         log.platform.toLowerCase().includes('tik') ? 'fa-tiktok' : 'fa-globe';
+
+            return `
+                <div class="midnight-card p-6 rounded-3xl hover:border-blue-500/50 group transition-all duration-300 shadow-lg">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                            <i class="fab ${icon} text-blue-500 group-hover:text-white text-xl"></i>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-2xl font-800 text-white">₦${parseInt(log.price).toLocaleString()}</span>
+                            <p class="text-[10px] text-green-400 font-bold uppercase tracking-tighter">In Stock</p>
+                        </div>
+                    </div>
+                    
+                    <h4 class="font-bold text-lg text-slate-100 mb-1">${log.title}</h4>
+                    <p class="text-slate-400 text-xs mb-6 italic">Category: ${log.tag || 'Premium Log'}</p>
+                    
+                    <button onclick="processPurchase(${index}, ${log.price}, '${log.title}')" 
+                            class="w-full py-4 bg-slate-800 rounded-2xl font-bold text-white hover:bg-blue-600 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] transition-all active:scale-95">
+                        Purchase Log
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // PURCHASE LOGIC
+    function processPurchase(index, price, title) {
+        // 1. Check if user has enough money (walletBalance is your global balance variable)
+        if (walletBalance < price) {
+            alert("❌ Insufficient Funds! Please use the 'Add Funds' button via Paystack to top up.");
+            return;
+        }
+
+        if (confirm(`Confirm purchase of ${title} for ₦${price.toLocaleString()}?`)) {
+            // 2. Deduct money
+            walletBalance -= price;
+            
+            // 3. Update the Dashboard (Calls your existing UI update function)
+            updateUI();
+            
+            // 4. Record the transaction (Calls your existing logger)
+            logTx(title, price, false);
+
+            // 5. Success Message & Delivery
+            alert("✅ Success! Log details have been sent to your dashboard. ₦" + price + " has been deducted.");
+        }
+    }
+
+    // Auto-refresh the market whenever the Admin page saves something new
+    window.addEventListener('storage', () => {
+        renderMarketplace();
+    });
+
+    // Initial load
+    window.onload = () => {
+        updateUI(); // Your existing function
+        renderMarketplace();
+    };
+</script>
+        
+
+    <script>
+        // CONFIGURATION: Replace with your Public Key from Paystack Dashboard
+        const PAYSTACK_PUBLIC_KEY = 'pk_test_YOUR_KEY_HERE'; 
+        
+        let currentBalance = 0;
+
+        function updateBalanceDisplay() {
+            document.getElementById('wallet-balance').innerText = currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2});
+        }
+
+        function addTransaction(type, amount, label) {
+            const feed = document.getElementById('transaction-feed');
+            const noTrans = document.getElementById('no-trans');
+            if (noTrans) noTrans.remove();
+
+            const isDeposit = type === 'deposit';
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            const item = `
+                <div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5 animate-fade-in">
+                    <div>
+                        <p class="text-xs font-bold text-slate-200">${label}</p>
+                        <p class="text-[10px] text-slate-500">${time}</p>
+                    </div>
+                    <span class="${isDeposit ? 'text-green-400' : 'text-red-400'} font-bold text-sm">
+                        ${isDeposit ? '+' : '-'}₦${amount.toLocaleString()}
+                    </span>
+                </div>
+            `;
+            feed.insertAdjacentHTML('afterbegin', item);
+        }
+
+        // --- PAYSTACK LOGIC ---
+        function payWithPaystack() {
+            let amount = prompt("Enter amount to fund (₦):", "1000");
+            if (!amount || isNaN(amount) || amount <= 0) return;
+
+            let handler = PaystackPop.setup({
+                key: PAYSTACK_PUBLIC_KEY,
+                email: 'customer@logszone.com', // In real app, use the logged-in user's email
+                amount: amount * 100, // Paystack uses Kobo (Amount * 100)
+                currency: "NGN",
+                callback: function(response) {
+                    // Payment successful!
+                    currentBalance += parseFloat(amount);
+                    updateBalanceDisplay();
+                    addTransaction('deposit', parseFloat(amount), 'Wallet Deposit');
+                    alert('Funds Added Successfully! Ref: ' + response.reference);
+                },
+                onClose: function() {
+                    console.log('Window closed.');
+                }
+            });
+            handler.openIframe();
+        }
+
+        // --- MARKETPLACE LOGIC ---
+        function buyItem(name, price) {
+            if (currentBalance < price) {
+                alert("Insufficient Balance. Please Add Funds.");
+                return;
+            }
+
+            if (confirm(`Confirm purchase of ${name} for ₦${price}?`)) {
+                currentBalance -= price;
+                updateBalanceDisplay();
+                addTransaction('purchase', price, `Purchased: ${name}`);
+                alert("Success! The log details have been sent to your account.");
+            }
+        }
+
+        window.onload = function() {
+    const currentUser = localStorage.getItem('currentUser');
+
+    // Security: If no user is logged in, kick them back to login
+    if (!currentUser) {
+        alert("Unauthorized access! Please login.");
+        window.location.href = 'index.html.html'; 
+    } else {
+        // This makes the page unique to the user
+        const displayArea = document.getElementById('welcomeMessage');
+        if(displayArea) {
+            displayArea.innerText = `Welcome to your private dashboard, ${currentUser}`;
+        }
+    }
+};
+    </script>
+    
+</body>
+</html>

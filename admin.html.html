@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LOGSZONE | Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>body { background-color: #020617; color: white; }</style>
+</head>
+<body class="p-10">
+    <div class="max-w-2xl mx-auto bg-slate-900 p-8 rounded-3xl border border-slate-800">
+        <h1 class="text-2xl font-bold mb-6">Admin Log Manager</h1>
+        <div class="space-y-4">
+            <input id="plat" placeholder="Platform (facebook, instagram, etc)" class="w-full bg-black p-4 rounded-xl border border-slate-700">
+            <input id="titl" placeholder="Log Title" class="w-full bg-black p-4 rounded-xl border border-slate-700">
+            <input id="pric" type="number" placeholder="Price (₦)" class="w-full bg-black p-4 rounded-xl border border-slate-700">
+            <input id="tag" placeholder="Tag (HQ, Aged, etc)" class="w-full bg-black p-4 rounded-xl border border-slate-700">
+            <button onclick="save()" class="w-full bg-blue-600 py-4 rounded-xl font-bold">Deploy to Marketplace</button>
+        </div>
+        <hr class="my-8 border-slate-800">
+        <div id="list" class="space-y-2"></div>
+    </div>
+    <script>
+        function save() {
+            const logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
+            logs.push({
+                platform: document.getElementById('plat').value,
+                title: document.getElementById('titl').value,
+                price: document.getElementById('pric').value,
+                tag: document.getElementById('tag').value
+            });
+            localStorage.setItem('shared_logs', JSON.stringify(logs));
+            location.reload();
+        }
+        function render() {
+            const logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
+            document.getElementById('list').innerHTML = logs.map((l, i) => `
+                <div class="flex justify-between p-3 bg-black rounded">
+                    <span>${l.title}</span>
+                    <button onclick="del(${i})" class="text-red-500">Delete</button>
+                </div>
+            `).join('');
+        }
+        function del(i) {
+            const logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
+            logs.splice(i, 1);
+            localStorage.setItem('shared_logs', JSON.stringify(logs));
+            render();
+        }
+        render();
+    </script>
+</body>
+</html>
