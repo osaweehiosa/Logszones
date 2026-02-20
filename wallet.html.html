@@ -9,13 +9,12 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
-        body { background-color: #020617; color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background-color: #020617; color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; scroll-behavior: smooth; }
         .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .btn-paystack { background: #09a5db; color: white; transition: all 0.3s ease; }
         .btn-paystack:hover { background: #0784af; transform: translateY(-2px); }
         .midnight-card { background: #0a192f; border: 1px solid #1e293b; transition: all 0.3s ease; }
-        .category-pill { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.2s; cursor: pointer; }
-        .category-pill:hover { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.4); }
+        .category-dropdown { background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 12px; width: 100%; outline: none; }
     </style>
 </head>
 <body class="min-h-screen bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-slate-900 via-blue-950 to-black">
@@ -55,33 +54,30 @@
         </div>
 
         <section class="mt-12">
-            <div class="flex items-center justify-between mb-8 px-2">
-                <h2 class="text-2xl font-800 tracking-tight text-white uppercase">Available Logs</h2>
-                <span class="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-full animate-pulse">
-                    Live Inventory
-                </span>
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 px-2 gap-4">
+                <div>
+                    <h2 class="text-2xl font-800 tracking-tight text-white uppercase">Available Logs</h2>
+                    <p class="text-slate-400 text-xs mt-1">Select a category to browse inventory</p>
+                </div>
+                <div class="w-full md:w-72">
+                    <select id="categorySelector" onchange="scrollToCategory(this.value)" class="category-dropdown font-bold">
+                        <option value="">Choose Category...</option>
+                        </select>
+                </div>
             </div>
 
-            <div id="categories-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-10">
+            <div id="logs-container" class="space-y-12 pb-20">
                 </div>
 
-            <a href="https://t.me/your_telegram_link" target="_blank" class="flex items-center justify-between p-4 mb-10 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 transition-all group shadow-xl">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                        <i class="fas fa-phone-alt text-white"></i>
-                    </div>
-                    <div>
-                        <p class="font-bold text-white text-sm">FOREIGN NUMBERS</p>
-                        <p class="text-[10px] text-blue-100">Tap to contact admin on Telegram</p>
-                    </div>
-                </div>
-                <i class="fas fa-external-link-alt text-white/50 group-hover:text-white transition-colors"></i>
-            </a>
-
-            <div id="logs-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
+            <div class="mt-10 p-8 glass rounded-[2rem] border-dashed border-2 border-blue-500/30 text-center">
+                <h3 class="text-xl font-bold mb-4">Foreign Numbers</h3>
+                <p class="text-slate-400 mb-6 text-sm">Tap below to purchase premium foreign numbers via our telegram portal.</p>
+                <a href="https://t.me/logszon3" target="_blank" class="inline-flex items-center gap-2 bg-[#229ED9] hover:bg-[#1c84b5] px-8 py-3 rounded-xl font-bold transition-all">
+                    <i class="fab fa-telegram"></i> Message Admin for Numbers
+                </a>
             </div>
         </section>
-    </div>
+        </div>
 
 <script>
     const PAYSTACK_PUBLIC_KEY = 'pk_test_244010503480c1c30a88bf74b2e7f56642e1fd02'; 
@@ -89,7 +85,7 @@
     let walletBalance = 0;
     const currentUser = localStorage.getItem('currentUser');
 
-    const CATEGORIES_LIST = [
+    const CATEGORIES = [
         "All tools & tutorial update", "Aged & new random facebook", "countries facebook", 
         "HQ USA FACEBOOK", "CREATE ANOTHER PAGE FACEBOOK", "DISCORD NEW AND AGED ACCOUNTS", 
         "TIKTOK ACCOUNTS", "TWITTER ACCOUNTS", "INSTAGRAM ACCOUNT", "MAILS ACCOUNTS", 
@@ -112,27 +108,7 @@
     function updateUI() {
         document.getElementById('wallet-balance').innerText = walletBalance.toLocaleString(undefined, {minimumFractionDigits: 2});
         saveBalance();
-        renderCategories();
         renderMarketplace();
-    }
-
-    function renderCategories() {
-        const catGrid = document.getElementById('categories-grid');
-        const logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
-        
-        catGrid.innerHTML = CATEGORIES_LIST.map(cat => {
-            const count = logs.filter(l => 
-                (l.tag && l.tag.toLowerCase() === cat.toLowerCase()) || 
-                (l.platform && l.platform.toLowerCase().includes(cat.toLowerCase().split(' ')[0]))
-            ).length;
-
-            return `
-                <div class="category-pill p-3 rounded-xl flex justify-between items-center">
-                    <span class="text-[11px] font-bold text-slate-300 truncate mr-2">${cat}</span>
-                    <span class="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-lg font-bold">${count}</span>
-                </div>
-            `;
-        }).join('');
     }
 
     function logTx(label, amount, isDeposit) {
@@ -154,57 +130,81 @@
         feed.insertAdjacentHTML('afterbegin', item);
     }
 
+    function scrollToCategory(id) {
+        if(!id) return;
+        const element = document.getElementById('cat-section-' + id.replace(/\s+/g, '-'));
+        if(element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
     function renderMarketplace() {
         const container = document.getElementById('logs-container');
+        const selector = document.getElementById('categorySelector');
         const logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
 
+        // Update Dropdown with counts
+        let selectorHTML = '<option value="">Choose Category...</option>';
+        CATEGORIES.forEach(cat => {
+            const count = logs.filter(l => l.tag === cat).length;
+            selectorHTML += `<option value="${cat}">${cat} (${count})</option>`;
+        });
+        selector.innerHTML = selectorHTML;
+
         if (logs.length === 0) {
-            container.innerHTML = `
-                <div class="col-span-full p-12 text-center midnight-card rounded-[2rem] border border-dashed border-slate-800">
-                    <p class="text-slate-500">The marketplace is currently empty. Waiting for Admin updates...</p>
-                </div>`;
+            container.innerHTML = `<div class="p-12 text-center midnight-card rounded-[2rem] border border-dashed border-slate-800"><p class="text-slate-500">The marketplace is currently empty.</p></div>`;
             return;
         }
 
-        container.innerHTML = logs.map((log, index) => {
-            const icon = log.platform.toLowerCase().includes('face') ? 'fa-facebook' :
-                         log.platform.toLowerCase().includes('insta') ? 'fa-instagram' :
-                         log.platform.toLowerCase().includes('twit') ? 'fa-twitter' :
-                         log.platform.toLowerCase().includes('tik') ? 'fa-tiktok' : 'fa-globe';
-
-            return `
-                <div class="midnight-card p-6 rounded-3xl hover:border-blue-500/50 group transition-all duration-300 shadow-lg relative overflow-hidden">
-                    <div class="flex justify-between items-start mb-6">
-                        <div class="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 transition-colors">
-                            <i class="fab ${icon} text-blue-500 group-hover:text-white text-xl"></i>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-2xl font-800 text-white">₦${parseInt(log.price).toLocaleString()}</span>
-                            <p class="text-[10px] text-green-400 font-bold uppercase tracking-tighter">Live</p>
-                        </div>
+        // Render sections for each category
+        let finalHTML = '';
+        CATEGORIES.forEach(cat => {
+            const catLogs = logs.filter(l => l.tag === cat);
+            if (catLogs.length > 0) {
+                finalHTML += `
+                <div id="cat-section-${cat.replace(/\s+/g, '-')}" class="pt-4">
+                    <div class="flex items-center gap-4 mb-6">
+                        <h3 class="text-blue-400 font-bold uppercase tracking-widest text-sm">${cat}</h3>
+                        <div class="h-[1px] bg-slate-800 flex-grow"></div>
+                        <span class="bg-slate-800 text-slate-400 px-3 py-1 rounded-lg text-[10px] font-bold">${catLogs.length} ITEMS</span>
                     </div>
-                    
-                    <h4 class="font-bold text-lg text-slate-100 mb-1">${log.title}</h4>
-                    <p class="text-slate-400 text-xs mb-6 italic">Category: ${log.tag || 'Premium Log'}</p>
-                    
-                    <button onclick="processPurchase(${index}, ${log.price}, '${log.title}')" 
-                            id="btn-${index}"
-                            class="w-full py-4 bg-slate-800 rounded-2xl font-bold text-white hover:bg-blue-600 transition-all active:scale-95">
-                        Purchase Log
-                    </button>
-
-                    <div id="details-${index}" class="hidden mt-4 p-4 bg-green-500/10 border border-green-500/30 rounded-xl">
-                        <p class="text-[10px] text-green-400 font-bold mb-1 uppercase text-center">Credentials Revealed</p>
-                        <code class="text-xs text-white break-all bg-black/40 p-2 block rounded">${log.data || 'No data provided'}</code>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        ${catLogs.map((log) => {
+                            const originalIndex = logs.indexOf(log);
+                            const icon = log.platform.toLowerCase().includes('face') ? 'fa-facebook' :
+                                         log.platform.toLowerCase().includes('insta') ? 'fa-instagram' :
+                                         log.platform.toLowerCase().includes('twit') ? 'fa-twitter' :
+                                         log.platform.toLowerCase().includes('tik') ? 'fa-tiktok' : 'fa-globe';
+                            return `
+                                <div class="midnight-card p-6 rounded-3xl hover:border-blue-500/50 group transition-all duration-300 shadow-lg relative overflow-hidden">
+                                    <div class="flex justify-between items-start mb-6">
+                                        <div class="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                                            <i class="fab ${icon} text-blue-500 group-hover:text-white text-xl"></i>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="text-2xl font-800 text-white">₦${parseInt(log.price).toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                    <h4 class="font-bold text-lg text-slate-100 mb-1">${log.title}</h4>
+                                    <p class="text-slate-400 text-xs mb-6 italic">Secure Delivery</p>
+                                    <button onclick="processPurchase(${originalIndex}, ${log.price}, '${log.title}')" 
+                                            id="btn-${originalIndex}"
+                                            class="w-full py-4 bg-slate-800 rounded-2xl font-bold text-white hover:bg-blue-600 transition-all active:scale-95">
+                                        Purchase Log
+                                    </button>
+                                    <div id="details-${originalIndex}" class="hidden mt-4 p-4 bg-green-500/10 border border-green-500/30 rounded-xl">
+                                        <code class="text-xs text-white break-all bg-black/40 p-2 block rounded">${log.data || 'No data provided'}</code>
+                                    </div>
+                                </div>`;
+                        }).join('')}
                     </div>
-                </div>
-            `;
-        }).join('');
+                </div>`;
+            }
+        });
+        container.innerHTML = finalHTML || `<p class="text-center text-slate-500">No active logs available in these categories.</p>`;
     }
 
     function processPurchase(index, price, title) {
         if (walletBalance < price) {
-            alert("❌ Insufficient Funds! Please add money to your wallet.");
+            alert("❌ Insufficient Funds!");
             return;
         }
         if (confirm(`Purchase ${title} for ₦${price.toLocaleString()}?`)) {
@@ -218,7 +218,6 @@
                 logs.splice(index, 1);
                 localStorage.setItem('shared_logs', JSON.stringify(logs));
                 renderMarketplace();
-                renderCategories();
             }, 8000);
         }
     }
@@ -235,7 +234,6 @@
                 walletBalance += parseFloat(amount);
                 updateUI();
                 logTx('Wallet Deposit', parseFloat(amount), true);
-                alert('Funds Added Successfully!');
             }
         });
         handler.openIframe();
@@ -243,7 +241,6 @@
 
     window.onload = function() {
         if (!currentUser) {
-            alert("Unauthorized access! Please login.");
             window.location.href = 'index.html'; 
         } else {
             const displayArea = document.getElementById('welcomeMessage');
@@ -253,10 +250,7 @@
         updateUI();
     };
 
-    window.addEventListener('storage', () => {
-        renderMarketplace();
-        renderCategories();
-    });
+    window.addEventListener('storage', () => { renderMarketplace(); });
 </script>
     
 </body>
