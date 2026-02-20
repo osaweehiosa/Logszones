@@ -9,6 +9,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+        <script src="https://js.paystack.co/v2/inline.js">
         body { background-color: #020617; color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; }
         .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .btn-paystack { background: #09a5db; color: white; transition: all 0.3s ease; }
@@ -183,7 +184,7 @@
         if (!amount || isNaN(amount) || amount <= 0) return;
 
         let handler = PaystackPop.setup({
-            key: pk_test_244010503480c1c30a88bf74b2e7f56642e1fd02,
+            key: 'pk_test_244010503480c1c30a88bf74b2e7f56642e1fd02',
             email: 'customer@logszone.com',
             amount: amount * 100, 
             currency: "NGN",
