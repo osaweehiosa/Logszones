@@ -6,12 +6,90 @@
     <title>LOGS ZONE | Premium Marketplace</title>
     <link rel="stylesheet" href="style.css.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head
+    <style>
+        /* Admin Button Styling */
+        .admin-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-right: 15px;
+            font-size: 0.8rem;
+        }
+
+        .admin-btn:hover {
+            background: var(--gradient, #007bff); /* Falls back to blue if var not defined */
+            transform: scale(1.1);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+        }
+
+        /* --- POPUP MODAL STYLING --- */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: #1a1a1a;
+            margin: 10% auto;
+            padding: 30px;
+            border: 1px solid #333;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 15px;
+            color: white;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            line-height: 1.6;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px; /* X at the top corner left as requested */
+            color: #aaa;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+
+        .modal-h3 {
+            margin-top: 10px;
+            color: #007bff;
+        }
+    </style>
+</head>
 <body>
 
     <nav class="navbar">
         <div class="logo">LOGS<span>ZONE</span></div>
         <div class="nav-right">
+            <div class="admin-btn" onclick="checkAdminAccess()" title="Admin Access">
+                <i class="fas fa-lock"></i>
+            </div>
+
             <div class="user-trigger" id="userMenu">
                 <span>User</span>
                 <div class="avatar">
@@ -27,12 +105,12 @@
 
     <header class="hero">
         <div class="hero-content">
-            <a href="http://wa.me/+2349013800994" class="wa-badge">
+            <a href="http://chat.whatsapp.com/KeNfcKfMX1ACoRbmZtZn3e" class="wa-badge">
                 <i class="fab fa-whatsapp"></i> Join our WhatsApp for news and updates...
             </a>
             <h1>Your Gateway to <br><span class="gradient-text">Premium Social Assets</span></h1>
             <p> LOGS ZONE provides high-trust, aged social media accounts. Scale your business, marketing, and presence with verified logs and rentals.</p>
-            <button class="glow-button" onclick="window.location.href='sign.html'">Rentals and Logs</button>
+            <button class="glow-button" onclick="window.location.href='sign.html.html'">Rentals and Logs</button>
         </div>
     </header>
 
@@ -92,7 +170,7 @@
             <div class="step-card reveal">
                 <div class="step-num">01</div>
                 <p>Sign up for a LOGS ZONE account to explore our curated social
-                     media accounts. Registration is fast, simple, and free.</p>
+                      media accounts. Registration is fast, simple, and free.</p>
             </div>
             <div class="step-card reveal">
                 <div class="step-num">02</div>
@@ -107,7 +185,7 @@
             <div class="step-card reveal">
                 <div class="step-num">04</div>
                 <p>Complete your purchase securely using our streamlined transaction process
-                     and enjoy flexible pricing options designed for your convenience.</p>
+                      and enjoy flexible pricing options designed for your convenience.</p>
             </div>
             <div class="step-card reveal">
                 <div class="step-num">05</div>
@@ -121,14 +199,67 @@
         <div class="footer-inner">
             <div class="footer-logo">LOGS<span>ZONE</span></div>
             <ul class="footer-links">
-                <li><a href="#">Privacy Policy</a></li>
-                <li><a href="#">Terms of Service</a></li>
-                <li><a href="#">Contact Support</a></li>
+                <li><a href="javascript:void(0)" onclick="openModal('privacyModal')">Privacy Policy</a></li>
+                <li><a href="javascript:void(0)" onclick="openModal('termsModal')">Terms of Service</a></li>
+                <li><a href="javascript:void(0)" onclick="openModal('supportModal')">Contact Support</a></li>
             </ul>
             <p>&copy; 2026 LOGS ZONE. All Rights Reserved.</p>
         </div>
     </footer>
 
+    <div id="privacyModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('privacyModal')">&times;</span>
+            <h3 class="modal-h3">Privacy Policy</h3>
+            <p>At LOGS ZONE, your privacy is our priority. We use industry-standard encryption to protect your personal data and transaction history. We do not share your information with third parties without your explicit consent.</p>
+        </div>
+    </div>
+
+    <div id="termsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('termsModal')">&times;</span>
+            <h3 class="modal-h3">Terms of Service</h3>
+            <p>By using LOGS ZONE, you agree to our terms. All sales are final once credentials are delivered. Accounts should be used for legitimate marketing purposes only. We are not responsible for any misuse of accounts post-purchase.</p>
+        </div>
+    </div>
+
+    <div id="supportModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('supportModal')">&times;</span>
+            <h3 class="modal-h3">Contact Support</h3>
+            <p>Having issues or need a custom order? Contact our elite support team:</p>
+            <p style="font-size: 1.2rem; font-weight: bold; margin-top: 10px;">
+               <i class="fas fa-phone"></i> +234 901 380 0994
+            </p>
+        </div>
+    </div>
+
     <script src="script.js"></script>
+    <script>
+        function checkAdminAccess() {
+            const passcode = prompt("Please enter admin passcode:");
+            if (passcode === "bigL$$") {
+                window.location.href = "admin.html.html"; 
+            } else {
+                alert("Unavailable to users.");
+            }
+        }
+
+        // Functions for the Footer Popups
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = "block";
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = "none";
+        }
+
+        // Close modal if user clicks outside of it
+        window.onclick = function(event) {
+            if (event.target.className === 'modal') {
+                event.target.style.display = "none";
+            }
+        }
+    </script>
 </body>
 </html>
