@@ -18,7 +18,6 @@
         .fade-in { animation: fadeIn 0.5s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Pseudo Notification Style */
         #pseudo-notification {
             position: fixed; bottom: 20px; left: 20px; z-index: 100;
             background: rgba(15, 23, 42, 0.9); border: 1px solid #3b82f6;
@@ -128,6 +127,7 @@
     
     let walletBalance = 0;
     let cart = [];
+    let lastLogsData = ""; // Glitch prevention variable
     const currentUser = localStorage.getItem('currentUser');
 
     const CATEGORIES = [
@@ -146,7 +146,23 @@
         { id: "vpn", name: "PAID PREMIUM VPN FOR PHONE" }
     ];
 
-    // Notification Logic
+    // UPDATED: Standardized Logo Mapping
+    const platformLogos = {
+        'tools': 'fa-screwdriver-wrench',
+        'fb-random': 'fa-brands fa-facebook',
+        'fb-countries': 'fa-brands fa-facebook-f',
+        'fb-usa': 'fa-flag-usa',
+        'fb-page': 'fa-file-invoice',
+        'discord': 'fa-brands fa-discord',
+        'tiktok': 'fa-brands fa-tiktok',
+        'twitter': 'fa-brands fa-twitter',
+        'instagram': 'fa-brands fa-instagram',
+        'mails': 'fa-envelope',
+        'reddit': 'fa-brands fa-reddit-alien',
+        'snapchat': 'fa-brands fa-snapchat',
+        'vpn': 'fa-shield-halved'
+    };
+
     const buyerNames = ["Jake***", "Tunde***", "Alex***", "Gifted***", "Sam***", "Rich***", "Dev***", "Stone***", "Musa***", "Bless***", "Chidi***", "Ugo***", "Zion***", "Rex***", "King***", "Boss***", "Ace***", "Panda***", "Ghost***", "Vibe***", "Swift***", "Bold***", "Max***", "Luke***", "Nuel***", "Dave***", "Favour***", "Josh***", "Ben***", "Sky***"];
     const productItems = ["Facebook Account", "Instagram Log", "USA HQ FB", "Aged Discord", "TikTok Account", "Premium VPN", "Twitter Ads Log", "Mail Access", "Snapchat Account", "Reddit High Karma"];
 
@@ -208,7 +224,13 @@
     function renderMarketplace() {
         const container = document.getElementById('logs-container');
         const selector = document.getElementById('categorySelector');
-        const logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
+        const rawLogs = localStorage.getItem('shared_logs') || "[]";
+        
+        // GLITCH FIX: Only re-render if the data is actually different
+        if (rawLogs === lastLogsData && container.innerHTML !== "") return;
+        lastLogsData = rawLogs;
+
+        const logs = JSON.parse(rawLogs);
 
         let selectorHTML = '<option value="">Choose Category...</option>';
         CATEGORIES.forEach(cat => {
@@ -235,11 +257,9 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         ${catLogs.map((log) => {
-                            const icon = log.platform.includes('fb') ? 'fa-facebook' :
-                                         log.platform.includes('insta') ? 'fa-instagram' :
-                                         log.platform.includes('twitter') ? 'fa-twitter' :
-                                         log.platform.includes('tiktok') ? 'fa-tiktok' : 
-                                         log.platform.includes('discord') ? 'fa-discord' : 'fa-shield-halved';
+                            // UPDATED: Correct Logo mapping based on Admin update
+                            const iconClass = platformLogos[log.platform] || 'fa-box';
+                            const iconPrefix = iconClass.includes('fa-brands') ? '' : 'fas';
                             
                             const isInCart = cart.some(item => item.id === log.id);
 
@@ -247,7 +267,7 @@
                                 <div class="midnight-card p-6 rounded-3xl hover:border-blue-500/50 group transition-all duration-300 shadow-lg relative overflow-hidden">
                                     <div class="flex justify-between items-start mb-6">
                                         <div class="w-10 h-10 bg-blue-600/10 rounded-xl flex items-center justify-center group-hover:bg-blue-600 transition-colors">
-                                            <i class="fab ${icon} text-blue-500 group-hover:text-white text-lg"></i>
+                                            <i class="${iconPrefix} ${iconClass} text-blue-500 group-hover:text-white text-lg"></i>
                                         </div>
                                         <div class="text-right">
                                             <span class="text-xl font-800 text-white">₦${parseInt(log.price).toLocaleString()}</span>
@@ -284,7 +304,6 @@
         container.innerHTML = finalHTML || `<p class="text-center text-slate-500">No active logs available.</p>`;
     }
 
-    // CART SYSTEM
     function addToCart(id, price, title) {
         if (!cart.some(item => item.id === id)) {
             cart.push({id, price, title});
@@ -349,7 +368,6 @@
             
             cart.forEach(item => {
                 logTx(`Bought: ${item.title}`, item.price, false);
-                // Simple logic to remove items from main list (localStorage)
                 let logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
                 const updatedLogs = logs.filter(l => l.id !== item.id);
                 localStorage.setItem('shared_logs', JSON.stringify(updatedLogs));
@@ -412,16 +430,14 @@
         updateUI();
     };
 
-    // Auto-refresh when Admin adds products (storage event)
     window.addEventListener('storage', (e) => { 
         if(e.key === 'shared_logs') {
             renderMarketplace(); 
         }
     });
 
-    // Forced poll every 5 seconds for instant deployment feel
+    // Optimized poll: checks for changes every 5s without causing UI glitches
     setInterval(() => { renderMarketplace(); }, 5000);
 </script>
-    
 </body>
 </html>
