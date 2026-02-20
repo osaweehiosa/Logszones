@@ -9,7 +9,6 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
-        <script src="https://js.paystack.co/v2/inline.js">
         body { background-color: #020617; color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; }
         .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .btn-paystack { background: #09a5db; color: white; transition: all 0.3s ease; }
@@ -67,15 +66,30 @@
     </div>
 
 <script>
-    // CONFIGURATION: Replace with your Public Key from Paystack Dashboard
     const PAYSTACK_PUBLIC_KEY = 'pk_test_244010503480c1c30a88bf74b2e7f56642e1fd02'; 
     
     // Global State
     let walletBalance = 0;
+    const currentUser = localStorage.getItem('currentUser');
+
+    // --- PERSISTENCE LOGIC ---
+    function saveBalance() {
+        if (currentUser) {
+            localStorage.setItem(`wallet_${currentUser}`, walletBalance);
+        }
+    }
+
+    function loadBalance() {
+        if (currentUser) {
+            const savedBalance = localStorage.getItem(`wallet_${currentUser}`);
+            walletBalance = savedBalance ? parseFloat(savedBalance) : 0;
+        }
+    }
 
     // --- UI UPDATES ---
     function updateUI() {
         document.getElementById('wallet-balance').innerText = walletBalance.toLocaleString(undefined, {minimumFractionDigits: 2});
+        saveBalance(); // Save every time UI updates to ensure data is fresh
         renderMarketplace();
     }
 
@@ -103,7 +117,6 @@
     // --- MARKETPLACE LOGIC ---
     function renderMarketplace() {
         const container = document.getElementById('logs-container');
-        // IMPORTANT: We use 'shared_logs' to connect with your admin panel
         const logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
 
         if (logs.length === 0) {
@@ -158,23 +171,20 @@
         }
 
         if (confirm(`Purchase ${title} for ₦${price.toLocaleString()}?`)) {
-            // Deduct and Update
             walletBalance -= price;
-            updateUI();
+            updateUI(); // This also triggers saveBalance()
             logTx(`Purchased: ${title}`, price, false);
 
-            // Reveal Details
             document.getElementById(`btn-${index}`).style.display = 'none';
             document.getElementById(`details-${index}`).classList.remove('hidden');
 
-            // Automatically remove from global marketplace after purchase
             setTimeout(() => {
                 let logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
                 logs.splice(index, 1);
                 localStorage.setItem('shared_logs', JSON.stringify(logs));
-                renderMarketplace(); // Refresh display
+                renderMarketplace();
                 alert("Transaction completed. Log removed from inventory.");
-            }, 8000); // 8 seconds to copy the data before it disappears
+            }, 8000);
         }
     }
 
@@ -184,18 +194,15 @@
         if (!amount || isNaN(amount) || amount <= 0) return;
 
         let handler = PaystackPop.setup({
-            key: 'pk_test_244010503480c1c30a88bf74b2e7f56642e1fd02',
+            key: PAYSTACK_PUBLIC_KEY,
             email: 'customer@logszone.com',
             amount: amount * 100, 
             currency: "NGN",
             callback: function(response) {
                 walletBalance += parseFloat(amount);
-                updateUI();
+                updateUI(); // This also triggers saveBalance()
                 logTx('Wallet Deposit', parseFloat(amount), true);
                 alert('Funds Added Successfully!');
-            },
-            onClose: function() {
-                console.log('Payment window closed.');
             }
         });
         handler.openIframe();
@@ -203,8 +210,6 @@
 
     // --- ON LOAD & SECURITY ---
     window.onload = function() {
-        // Handle User Session
-        const currentUser = localStorage.getItem('currentUser');
         if (!currentUser) {
             alert("Unauthorized access! Please login.");
             window.location.href = 'index.html'; 
@@ -213,14 +218,14 @@
             if(displayArea) {
                 displayArea.innerText = `Welcome, ${currentUser}`;
             }
+            // Load the specific user's money from storage
+            loadBalance();
         }
 
-        // Initial Data Fetch
         updateUI();
         renderMarketplace();
     };
 
-    // Live listen for Admin Page updates
     window.addEventListener('storage', () => {
         renderMarketplace();
     });
