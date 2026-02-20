@@ -128,6 +128,23 @@
         // Security Settings (Change "admin123" to your preferred password)
         const ADMIN_PASS = "admin123";
 
+        // Logo Mapping for Categories
+        const platformLogos = {
+            'tools': 'fa-screwdriver-wrench',
+            'fb-random': 'fa-brands fa-facebook',
+            'fb-countries': 'fa-brands fa-facebook-f',
+            'fb-usa': 'fa-flag-usa',
+            'fb-page': 'fa-file-invoice',
+            'discord': 'fa-brands fa-discord',
+            'tiktok': 'fa-brands fa-tiktok',
+            'twitter': 'fa-brands fa-twitter',
+            'instagram': 'fa-brands fa-instagram',
+            'mails': 'fa-envelope',
+            'reddit': 'fa-brands fa-reddit-alien',
+            'snapchat': 'fa-brands fa-snapchat',
+            'vpn': 'fa-shield-halved'
+        };
+
         function checkPass() {
             const input = document.getElementById('admin-pass').value;
             if(input === ADMIN_PASS) {
@@ -164,17 +181,13 @@
             }
 
             let logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
-            
-            // Generate message for Telegram
             const finalData = `${tgLink}?text=Hi, I am a user interested in buying: ${title}`;
 
             if(editId) {
-                // Update existing
                 const index = logs.findIndex(l => l.id == editId);
                 logs[index] = { ...logs[index], platform, title, price, tag: tag || 'Premium', data: finalData };
                 alert("✅ Product Updated Successfully");
             } else {
-                // Add new
                 const newLog = {
                     id: Date.now(),
                     platform,
@@ -243,10 +256,16 @@
             } else {
                 emptyMsg.classList.add('hidden');
                 logs.forEach((log, index) => {
+                    // Get icon based on platform
+                    const iconClass = platformLogos[log.platform] || 'fa-box';
+                    
                     const row = `
                         <tr class="group hover:bg-white/5 transition">
                             <td class="py-4">
-                                <span class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-1 rounded uppercase font-bold">${log.platform}</span>
+                                <div class="flex items-center gap-2">
+                                    <i class="fas ${iconClass} text-blue-400 text-sm"></i>
+                                    <span class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-1 rounded uppercase font-bold">${log.platform}</span>
+                                </div>
                             </td>
                             <td class="py-4">
                                 <p class="text-sm font-bold text-slate-200">${log.title}</p>
