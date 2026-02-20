@@ -15,6 +15,8 @@
         .btn-paystack:hover { background: #0784af; transform: translateY(-2px); }
         .midnight-card { background: #0a192f; border: 1px solid #1e293b; transition: all 0.3s ease; }
         .category-dropdown { background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 12px; width: 100%; outline: none; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="min-h-screen bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-slate-900 via-blue-950 to-black">
@@ -56,13 +58,13 @@
         <section class="mt-12">
             <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 px-2 gap-4">
                 <div>
-                    <h2 class="text-2xl font-800 tracking-tight text-white uppercase">Available Logs</h2>
-                    <p class="text-slate-400 text-xs mt-1">Select a category to browse inventory</p>
+                    <h2 class="text-2xl font-800 tracking-tight text-white uppercase">Marketplace Inventory</h2>
+                    <p class="text-slate-400 text-xs mt-1">Select a category to browse logs</p>
                 </div>
                 <div class="w-full md:w-72">
                     <select id="categorySelector" onchange="scrollToCategory(this.value)" class="category-dropdown font-bold">
                         <option value="">Choose Category...</option>
-                        </select>
+                    </select>
                 </div>
             </div>
 
@@ -77,7 +79,7 @@
                 </a>
             </div>
         </section>
-        </div>
+    </div>
 
 <script>
     const PAYSTACK_PUBLIC_KEY = 'pk_test_244010503480c1c30a88bf74b2e7f56642e1fd02'; 
@@ -86,10 +88,19 @@
     const currentUser = localStorage.getItem('currentUser');
 
     const CATEGORIES = [
-        "All tools & tutorial update", "Aged & new random facebook", "countries facebook", 
-        "HQ USA FACEBOOK", "CREATE ANOTHER PAGE FACEBOOK", "DISCORD NEW AND AGED ACCOUNTS", 
-        "TIKTOK ACCOUNTS", "TWITTER ACCOUNTS", "INSTAGRAM ACCOUNT", "MAILS ACCOUNTS", 
-        "REDDIT", "SNAPCHAT ACCOUNT", "PAID PREMIUM VPN FOR PHONE"
+        { id: "tools", name: "All tools & tutorial update" },
+        { id: "fb-random", name: "Aged & new random facebook" },
+        { id: "fb-countries", name: "countries facebook" },
+        { id: "fb-usa", name: "HQ USA FACEBOOK" },
+        { id: "fb-page", name: "CREATE ANOTHER PAGE FACEBOOK" },
+        { id: "discord", name: "DISCORD NEW AND AGED ACCOUNTS" },
+        { id: "tiktok", name: "TIKTOK ACCOUNTS" },
+        { id: "twitter", name: "TWITTER ACCOUNTS" },
+        { id: "instagram", name: "INSTAGRAM ACCOUNT" },
+        { id: "mails", name: "MAILS ACCOUNTS" },
+        { id: "reddit", name: "REDDIT" },
+        { id: "snapchat", name: "SNAPCHAT ACCOUNT" },
+        { id: "vpn", name: "PAID PREMIUM VPN FOR PHONE" }
     ];
 
     function saveBalance() {
@@ -117,7 +128,7 @@
         if (noTrans) noTrans.remove();
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const item = `
-            <div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5 animate-fade-in">
+            <div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5 fade-in">
                 <div>
                     <p class="text-xs font-bold text-slate-200">${label}</p>
                     <p class="text-[10px] text-slate-500">${time}</p>
@@ -132,7 +143,7 @@
 
     function scrollToCategory(id) {
         if(!id) return;
-        const element = document.getElementById('cat-section-' + id.replace(/\s+/g, '-'));
+        const element = document.getElementById('cat-section-' + id);
         if(element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
@@ -144,8 +155,8 @@
         // Update Dropdown with counts
         let selectorHTML = '<option value="">Choose Category...</option>';
         CATEGORIES.forEach(cat => {
-            const count = logs.filter(l => l.tag === cat).length;
-            selectorHTML += `<option value="${cat}">${cat} (${count})</option>`;
+            const count = logs.filter(l => l.platform === cat.id).length;
+            selectorHTML += `<option value="${cat.id}">${cat.name} (${count})</option>`;
         });
         selector.innerHTML = selectorHTML;
 
@@ -157,22 +168,22 @@
         // Render sections for each category
         let finalHTML = '';
         CATEGORIES.forEach(cat => {
-            const catLogs = logs.filter(l => l.tag === cat);
+            const catLogs = logs.filter(l => l.platform === cat.id);
             if (catLogs.length > 0) {
                 finalHTML += `
-                <div id="cat-section-${cat.replace(/\s+/g, '-')}" class="pt-4">
+                <div id="cat-section-${cat.id}" class="pt-4 fade-in">
                     <div class="flex items-center gap-4 mb-6">
-                        <h3 class="text-blue-400 font-bold uppercase tracking-widest text-sm">${cat}</h3>
+                        <h3 class="text-blue-400 font-bold uppercase tracking-widest text-sm">${cat.name}</h3>
                         <div class="h-[1px] bg-slate-800 flex-grow"></div>
                         <span class="bg-slate-800 text-slate-400 px-3 py-1 rounded-lg text-[10px] font-bold">${catLogs.length} ITEMS</span>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         ${catLogs.map((log) => {
-                            const originalIndex = logs.indexOf(log);
-                            const icon = log.platform.toLowerCase().includes('face') ? 'fa-facebook' :
-                                         log.platform.toLowerCase().includes('insta') ? 'fa-instagram' :
-                                         log.platform.toLowerCase().includes('twit') ? 'fa-twitter' :
-                                         log.platform.toLowerCase().includes('tik') ? 'fa-tiktok' : 'fa-globe';
+                            const icon = log.platform.includes('fb') ? 'fa-facebook' :
+                                         log.platform.includes('insta') ? 'fa-instagram' :
+                                         log.platform.includes('twitter') ? 'fa-twitter' :
+                                         log.platform.includes('tiktok') ? 'fa-tiktok' : 
+                                         log.platform.includes('discord') ? 'fa-discord' : 'fa-shield-halved';
                             return `
                                 <div class="midnight-card p-6 rounded-3xl hover:border-blue-500/50 group transition-all duration-300 shadow-lg relative overflow-hidden">
                                     <div class="flex justify-between items-start mb-6">
@@ -184,14 +195,19 @@
                                         </div>
                                     </div>
                                     <h4 class="font-bold text-lg text-slate-100 mb-1">${log.title}</h4>
-                                    <p class="text-slate-400 text-xs mb-6 italic">Secure Delivery</p>
-                                    <button onclick="processPurchase(${originalIndex}, ${log.price}, '${log.title}')" 
-                                            id="btn-${originalIndex}"
+                                    <p class="text-slate-400 text-[10px] uppercase font-bold tracking-tighter mb-6">${log.tag || 'Instant Delivery'}</p>
+                                    
+                                    <button onclick="processPurchase(${log.id}, ${log.price}, '${log.title}')" 
+                                            id="btn-${log.id}"
                                             class="w-full py-4 bg-slate-800 rounded-2xl font-bold text-white hover:bg-blue-600 transition-all active:scale-95">
                                         Purchase Log
                                     </button>
-                                    <div id="details-${originalIndex}" class="hidden mt-4 p-4 bg-green-500/10 border border-green-500/30 rounded-xl">
-                                        <code class="text-xs text-white break-all bg-black/40 p-2 block rounded">${log.data || 'No data provided'}</code>
+                                    
+                                    <div id="details-${log.id}" class="hidden mt-4 p-4 bg-green-500/10 border border-green-500/30 rounded-xl text-center">
+                                        <p class="text-[10px] text-green-400 mb-2 uppercase font-bold">Access Link Unlocked</p>
+                                        <a href="${log.data}" target="_blank" class="text-sm text-white font-bold underline flex items-center justify-center gap-2">
+                                            <i class="fab fa-telegram"></i> Message Admin for Log
+                                        </a>
                                     </div>
                                 </div>`;
                         }).join('')}
@@ -199,26 +215,30 @@
                 </div>`;
             }
         });
-        container.innerHTML = finalHTML || `<p class="text-center text-slate-500">No active logs available in these categories.</p>`;
+        container.innerHTML = finalHTML || `<p class="text-center text-slate-500">No active logs available.</p>`;
     }
 
-    function processPurchase(index, price, title) {
+    function processPurchase(id, price, title) {
         if (walletBalance < price) {
-            alert("❌ Insufficient Funds!");
+            alert("❌ Insufficient Funds! Please fund your wallet.");
             return;
         }
-        if (confirm(`Purchase ${title} for ₦${price.toLocaleString()}?`)) {
+        if (confirm(`Confirm purchase for ${title}? ₦${price.toLocaleString()} will be deducted.`)) {
             walletBalance -= price;
             updateUI();
-            logTx(`Purchased: ${title}`, price, false);
-            document.getElementById(`btn-${index}`).style.display = 'none';
-            document.getElementById(`details-${index}`).classList.remove('hidden');
+            logTx(`Bought: ${title}`, price, false);
+            
+            // Hide button and show the Telegram link
+            document.getElementById(`btn-${id}`).classList.add('hidden');
+            document.getElementById(`details-${id}`).classList.remove('hidden');
+            
+            // Auto-remove log from marketplace for other users after short delay
             setTimeout(() => {
                 let logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
-                logs.splice(index, 1);
-                localStorage.setItem('shared_logs', JSON.stringify(logs));
+                const updatedLogs = logs.filter(l => l.id !== id);
+                localStorage.setItem('shared_logs', JSON.stringify(updatedLogs));
                 renderMarketplace();
-            }, 8000);
+            }, 10000); 
         }
     }
 

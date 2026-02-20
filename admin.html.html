@@ -12,42 +12,58 @@
         .admin-card { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(59, 130, 246, 0.2); backdrop-filter: blur(10px); }
         .input-style { background: #0f172a; border: 1px solid #1e293b; color: white; transition: all 0.3s; }
         .input-style:focus { border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); outline: none; }
-        .gradient-text { background: linear-gradient(to right, #60a5fa, #2563eb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        #login-overlay { position: fixed; inset: 0; background: #020617; z-index: 100; display: flex; align-items: center; justify-content: center; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body class="min-h-screen p-4 md:p-10 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-blue-900/20 via-slate-950 to-black">
 
-    <div class="max-w-6xl mx-auto">
+    <div id="login-overlay">
+        <div class="admin-card p-8 rounded-3xl w-full max-w-md text-center">
+            <h2 class="text-2xl font-bold mb-6">Admin Authentication</h2>
+            <input id="admin-pass" type="password" placeholder="Enter Admin Password" class="w-full input-style p-4 rounded-2xl mb-4">
+            <button onclick="checkPass()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold">Access Terminal</button>
+        </div>
+    </div>
+
+    <div id="admin-content" class="max-w-6xl mx-auto hidden">
         <header class="flex justify-between items-center mb-12">
             <div>
                 <h1 class="text-3xl font-800 tracking-tighter italic uppercase">Logs<span class="text-blue-500">Zone</span> <span class="text-xs bg-blue-600 px-2 py-1 rounded-md not-italic tracking-normal ml-2">Admin</span></h1>
                 <p class="text-slate-400 text-sm mt-1">Global Inventory Control Panel</p>
             </div>
-            <div class="text-right hidden md:block">
-                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">System Status</p>
-                <p class="text-green-400 font-bold flex items-center gap-2 justify-end">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Encrypted & Live
-                </p>
+            <div class="text-right">
+                <label class="text-[10px] text-slate-500 uppercase font-bold tracking-widest block mb-1">Telegram Channel Link</label>
+                <input id="tg-link-input" type="text" onchange="saveTgLink()" class="input-style px-3 py-1 rounded-lg text-xs w-48" placeholder="https://t.me/yourchannel">
             </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div class="lg:col-span-5">
                 <div class="admin-card p-8 rounded-[2rem] shadow-2xl">
-                    <h2 class="text-xl font-bold mb-6 flex items-center gap-3">
+                    <h2 id="form-title" class="text-xl font-bold mb-6 flex items-center gap-3">
                         <i class="fas fa-cloud-upload-alt text-blue-500"></i> Deploy New Log
                     </h2>
                     
+                    <input type="hidden" id="edit-id">
+
                     <div class="space-y-5">
                         <div>
-                            <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Social Platform</label>
+                            <label class="text-xs font-bold text-slate-500 uppercase mb-2 block">Category / Platform</label>
                             <select id="platform" class="w-full input-style p-4 rounded-2xl">
-                                <option value="facebook">Facebook</option>
-                                <option value="instagram">Instagram</option>
-                                <option value="twitter">Twitter (X)</option>
-                                <option value="tiktok">TikTok</option>
-                                <option value="google">Google / Gmail</option>
-                                <option value="other">Other Platform</option>
+                                <option value="tools">All tools & tutorial update</option>
+                                <option value="fb-random">Aged & new random facebook</option>
+                                <option value="fb-countries">Countries facebook</option>
+                                <option value="fb-usa">HQ USA FACEBOOK</option>
+                                <option value="fb-page">CREATE ANOTHER PAGE FACEBOOK</option>
+                                <option value="discord">DISCORD NEW AND AGED ACCOUNTS</option>
+                                <option value="tiktok">TIKTOK ACCOUNTS</option>
+                                <option value="twitter">TWITTER ACCOUNTS</option>
+                                <option value="instagram">INSTAGRAM ACCOUNT</option>
+                                <option value="mails">MAILS ACCOUNTS</option>
+                                <option value="reddit">REDDIT</option>
+                                <option value="snapchat">SNAPCHAT ACCOUNT</option>
+                                <option value="vpn">PAID PREMIUM VPN FOR PHONE</option>
                             </select>
                         </div>
 
@@ -69,14 +85,15 @@
 
                         <div>
                             <label class="text-xs font-bold text-blue-400 uppercase mb-2 block flex items-center gap-2">
-                                <i class="fas fa-lock"></i> Hidden Credentials
+                                <i class="fas fa-link"></i> Hidden Credentials (Telegram Link)
                             </label>
-                            <textarea id="data" placeholder="Email:Password:Cookies (Only visible after purchase)" class="w-full input-style p-4 rounded-2xl h-32"></textarea>
+                            <textarea id="data" readonly class="w-full input-style p-4 rounded-2xl h-20 opacity-70">The current Telegram link will be automatically attached to this product.</textarea>
                         </div>
 
-                        <button onclick="publishLog()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-800 text-white transition-all transform active:scale-95 shadow-lg shadow-blue-600/20">
+                        <button id="submit-btn" onclick="publishLog()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-800 text-white transition-all transform active:scale-95 shadow-lg shadow-blue-600/20">
                             Push to Marketplace
                         </button>
+                        <button id="cancel-edit" onclick="resetForm()" class="w-full bg-slate-700 py-2 rounded-xl text-xs hidden">Cancel Editing</button>
                     </div>
                 </div>
             </div>
@@ -92,18 +109,15 @@
                         <table class="w-full text-left">
                             <thead class="text-slate-500 text-[10px] uppercase tracking-widest border-b border-slate-800">
                                 <tr>
-                                    <th class="pb-4">Platform</th>
+                                    <th class="pb-4">Category</th>
                                     <th class="pb-4">Details</th>
                                     <th class="pb-4">Price</th>
                                     <th class="pb-4 text-right">Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="inventory-list" class="divide-y divide-slate-800">
-                                </tbody>
+                            <tbody id="inventory-list" class="divide-y divide-slate-800"></tbody>
                         </table>
-                        <div id="empty-msg" class="text-center py-20 text-slate-600 italic hidden">
-                            No logs currently active in the market.
-                        </div>
+                        <div id="empty-msg" class="text-center py-20 text-slate-600 italic hidden">No logs currently active.</div>
                     </div>
                 </div>
             </div>
@@ -111,40 +125,108 @@
     </div>
 
     <script>
+        // Security Settings (Change "admin123" to your preferred password)
+        const ADMIN_PASS = "admin123";
+
+        function checkPass() {
+            const input = document.getElementById('admin-pass').value;
+            if(input === ADMIN_PASS) {
+                document.getElementById('login-overlay').classList.add('hidden');
+                document.getElementById('admin-content').classList.remove('hidden');
+                loadSettings();
+                renderInventory();
+            } else {
+                alert("Access Denied: Incorrect Password");
+            }
+        }
+
+        function saveTgLink() {
+            const link = document.getElementById('tg-link-input').value;
+            localStorage.setItem('admin_tg_link', link);
+        }
+
+        function loadSettings() {
+            const savedLink = localStorage.getItem('admin_tg_link') || "https://t.me/yourchannel";
+            document.getElementById('tg-link-input').value = savedLink;
+        }
+
         function publishLog() {
             const platform = document.getElementById('platform').value;
             const title = document.getElementById('title').value;
             const price = document.getElementById('price').value;
             const tag = document.getElementById('tag').value;
-            const data = document.getElementById('data').value;
+            const editId = document.getElementById('edit-id').value;
+            const tgLink = localStorage.getItem('admin_tg_link') || "#";
 
-            if(!title || !price || !data) {
-                alert("Please fill in the required fields (Title, Price, and Credentials)");
+            if(!title || !price) {
+                alert("Please fill in Title and Price");
                 return;
             }
 
-            const logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
+            let logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
             
-            const newLog = {
-                id: Date.now(),
-                platform,
-                title,
-                price,
-                tag: tag || 'Premium',
-                data: data // This connects to the credential reveal in wallet.html
-            };
+            // Generate message for Telegram
+            const finalData = `${tgLink}?text=Hi, I am a user interested in buying: ${title}`;
 
-            logs.push(newLog);
+            if(editId) {
+                // Update existing
+                const index = logs.findIndex(l => l.id == editId);
+                logs[index] = { ...logs[index], platform, title, price, tag: tag || 'Premium', data: finalData };
+                alert("✅ Product Updated Successfully");
+            } else {
+                // Add new
+                const newLog = {
+                    id: Date.now(),
+                    platform,
+                    title,
+                    price,
+                    tag: tag || 'Premium',
+                    data: finalData
+                };
+                logs.push(newLog);
+                alert("✅ Successfully Deployed to Marketplace");
+            }
+
             localStorage.setItem('shared_logs', JSON.stringify(logs));
+            resetForm();
+            renderInventory();
+        }
+
+        function editLog(id) {
+            const logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
+            const log = logs.find(l => l.id == id);
             
-            // Clear form
+            if(log) {
+                document.getElementById('platform').value = log.platform;
+                document.getElementById('title').value = log.title;
+                document.getElementById('price').value = log.price;
+                document.getElementById('tag').value = log.tag;
+                document.getElementById('edit-id').value = log.id;
+                
+                document.getElementById('form-title').innerText = "Edit Product";
+                document.getElementById('submit-btn').innerText = "Update Product";
+                document.getElementById('cancel-edit').classList.remove('hidden');
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('platform').selectedIndex = 0;
             document.getElementById('title').value = '';
             document.getElementById('price').value = '';
             document.getElementById('tag').value = '';
-            document.getElementById('data').value = '';
+            document.getElementById('edit-id').value = '';
+            document.getElementById('form-title').innerText = "Deploy New Log";
+            document.getElementById('submit-btn').innerText = "Push to Marketplace";
+            document.getElementById('cancel-edit').classList.add('hidden');
+        }
 
-            alert("✅ Successfully Deployed to mark.html");
-            renderInventory();
+        function removeLog(index) {
+            if(confirm("Delete this product?")) {
+                const logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
+                logs.splice(index, 1);
+                localStorage.setItem('shared_logs', JSON.stringify(logs));
+                renderInventory();
+            }
         }
 
         function renderInventory() {
@@ -158,45 +240,34 @@
 
             if(logs.length === 0) {
                 emptyMsg.classList.remove('hidden');
-                return;
             } else {
                 emptyMsg.classList.add('hidden');
-            }
-
-            logs.forEach((log, index) => {
-                const row = `
-                    <tr class="group hover:bg-white/5 transition">
-                        <td class="py-4">
-                            <i class="fab fa-${log.platform} text-blue-500 text-lg"></i>
-                        </td>
-                        <td class="py-4">
-                            <p class="text-sm font-bold text-slate-200">${log.title}</p>
-                            <p class="text-[10px] text-slate-500 uppercase tracking-tighter">${log.tag}</p>
-                        </td>
-                        <td class="py-4 font-bold text-white text-sm">₦${parseInt(log.price).toLocaleString()}</td>
-                        <td class="py-4 text-right">
-                            <button onclick="removeLog(${index})" class="text-red-500 hover:text-red-400 p-2 transition">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-                list.insertAdjacentHTML('beforeend', row);
-            });
-        }
-
-        function removeLog(index) {
-            if(confirm("Are you sure you want to remove this log from the marketplace?")) {
-                const logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
-                logs.splice(index, 1);
-                localStorage.setItem('shared_logs', JSON.stringify(logs));
-                renderInventory();
+                logs.forEach((log, index) => {
+                    const row = `
+                        <tr class="group hover:bg-white/5 transition">
+                            <td class="py-4">
+                                <span class="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-1 rounded uppercase font-bold">${log.platform}</span>
+                            </td>
+                            <td class="py-4">
+                                <p class="text-sm font-bold text-slate-200">${log.title}</p>
+                                <p class="text-[10px] text-slate-500 uppercase tracking-tighter">${log.tag}</p>
+                            </td>
+                            <td class="py-4 font-bold text-white text-sm">₦${parseInt(log.price).toLocaleString()}</td>
+                            <td class="py-4 text-right space-x-2">
+                                <button onclick="editLog(${log.id})" class="text-blue-400 hover:text-blue-300 p-2 transition">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="removeLog(${index})" class="text-red-500 hover:text-red-400 p-2 transition">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    list.insertAdjacentHTML('beforeend', row);
+                });
             }
         }
 
-        // Initialize
-        window.onload = renderInventory;
-        // Listen for purchases from the wallet.html (it will remove items automatically)
         window.addEventListener('storage', renderInventory);
     </script>
 </body>
