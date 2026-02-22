@@ -20,6 +20,17 @@
         .fade-in { animation: fadeIn 0.5s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
+        /* Fixed Scrollable Transaction Box */
+        #transaction-feed {
+            height: 250px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #3b82f6 #0a192f;
+        }
+        #transaction-feed::-webkit-scrollbar { width: 6px; }
+        #transaction-feed::-webkit-scrollbar-track { background: #0a192f; }
+        #transaction-feed::-webkit-scrollbar-thumb { background-color: #3b82f6; border-radius: 20px; }
+
         #pseudo-notification {
             position: fixed; bottom: 20px; left: 20px; z-index: 100;
             background: rgba(15, 23, 42, 0.9); border: 1px solid #3b82f6;
@@ -63,7 +74,7 @@
                     <span>Recent Transactions</span>
                     <i class="fas fa-sync-alt text-[10px] animate-spin text-blue-500"></i>
                 </h3>
-                <div id="transaction-feed" class="space-y-4 overflow-y-auto max-h-[200px] pr-2 custom-scrollbar">
+                <div id="transaction-feed" class="space-y-4 pr-2">
                     <p id="no-trans" class="text-slate-500 text-xs italic text-center py-6">Waiting for first transaction...</p>
                 </div>
             </div>
@@ -94,18 +105,6 @@
         </section>
     </div>
 
-    <div id="pseudo-notification" class="fade-in">
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                <i class="fas fa-shopping-bag text-white text-xs"></i>
-            </div>
-            <div>
-                <p id="pseudo-text" class="text-xs font-bold text-white"></p>
-                <p class="text-[10px] text-blue-400">Just now</p>
-            </div>
-        </div>
-    </div>
-
     <div id="cartModal" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
         <div class="glass w-full max-w-md rounded-3xl p-6 border border-blue-500/30">
             <h3 class="text-xl font-800 mb-4 flex justify-between">
@@ -125,7 +124,6 @@
     </div>
 
 <script>
-    // --- FIREBASE CONFIGURATION ---
     const firebaseConfig = {
         apiKey: "AIzaSyCcWUN1NBoKcnJnHw1aLYQ4xsJELP2OahU",
         authDomain: "logszone-marketplace.firebaseapp.com",
@@ -144,7 +142,7 @@
     let walletBalance = 0;
     let cart = [];
     const currentUser = localStorage.getItem('currentUser');
-    let adminTelegram = "https://t.me/logszon3"; // Default
+    let adminTelegram = "https://t.me/logszon3"; 
 
     const CATEGORIES = [
         { id: "tools", name: "All tools & tutorial update" },
@@ -178,7 +176,6 @@
         'vpn': 'fa-shield-halved'
     };
 
-    // Load Cart from LocalStorage based on user
     function loadCart() {
         if (currentUser) {
             const savedCart = localStorage.getItem(`cart_${currentUser}`);
@@ -212,16 +209,13 @@
         updateCartDisplay();
     }
 
-    // Pull products and settings from Firebase
     function initFirebaseListeners() {
-        // Listen for products
         db.ref('products').on('value', (snapshot) => {
             const data = snapshot.val();
             const products = data ? Object.values(data) : [];
             renderMarketplace(products);
         });
 
-        // Listen for admin telegram link
         db.ref('settings/telegram').on('value', (snapshot) => {
             if (snapshot.val()) adminTelegram = snapshot.val();
         });
@@ -292,7 +286,6 @@
     }
 
     function addToCart(id, price, title) {
-        // Requirement: Add same product more than once
         cart.push({id, price, title, cartUniqueId: Date.now() + Math.random()});
         updateUI();
         alert(`✅ Added ${title} to cart!`);
@@ -344,6 +337,7 @@
         renderCartItems();
     }
 
+    // REDIRECTION LOGIC FOR CART
     function checkoutCart() {
         const total = cart.reduce((sum, item) => sum + item.price, 0);
         if (cart.length === 0) return;
@@ -354,19 +348,25 @@
         }
         
         if (confirm(`Checkout ${cart.length} items for ₦${total.toLocaleString()}?`)) {
+            const productNames = cart.map(item => item.title).join(", ");
+            const qty = cart.length;
+            const paidAmount = total;
+            
             walletBalance -= total;
             cart.forEach(item => logTx(`Bought: ${item.title}`, item.price, false));
             
-            // Empty the cart
+            const message = `hi i am ${currentUser} and i want to buy ${productNames}, the number of the particular product is ${qty} and the amount which has already been paid before the redirection is ₦${paidAmount.toLocaleString()}`;
+            
             cart = [];
             updateUI();
             toggleCartModal();
             
-            alert("✅ Payment Successful! Redirecting to Admin for your logs...");
-            window.open(adminTelegram, '_blank');
+            alert("✅ Payment Successful! Redirecting to Admin...");
+            window.open(`${adminTelegram}?text=${encodeURIComponent(message)}`, '_blank');
         }
     }
 
+    // REDIRECTION LOGIC FOR SINGLE BUY
     function processPurchase(id, price, title) {
         if (walletBalance < price) {
             alert("❌ Insufficient Funds! Please fund your wallet.");
@@ -376,8 +376,11 @@
             walletBalance -= price;
             logTx(`Bought: ${title}`, price, false);
             updateUI();
+            
+            const message = `hi i am ${currentUser} and i want to buy ${title}, the number of the particular product is 1 and the amount which has already been paid before the redirection is ₦${price.toLocaleString()}`;
+            
             alert("✅ Purchase successful! Redirecting to contact admin.");
-            window.open(adminTelegram, '_blank');
+            window.open(`${adminTelegram}?text=${encodeURIComponent(message)}`, '_blank');
         }
     }
 
@@ -403,15 +406,20 @@
     function payWithPaystack() {
         let amount = prompt("Enter amount to fund (₦):", "1000");
         if (!amount || isNaN(amount) || amount <= 0) return;
+        
         let handler = PaystackPop.setup({
             key: PAYSTACK_PUBLIC_KEY,
             email: currentUser + '@logszone.com',
-            amount: amount * 100, 
+            amount: Math.round(amount * 100), 
             currency: "NGN",
             callback: function(response) {
                 walletBalance += parseFloat(amount);
                 updateUI();
                 logTx('Wallet Deposit', parseFloat(amount), true);
+                alert("Funding Successful!");
+            },
+            onClose: function() {
+                alert('Transaction cancelled.');
             }
         });
         handler.openIframe();
