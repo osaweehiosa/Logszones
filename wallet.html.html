@@ -408,7 +408,7 @@
         const floatAmount = parseFloat(amountInput);
 
         let handler = PaystackPop.setup({
-            key: PAYSTACK_PUBLIC_KEY,
+            key: 'pk_live_fe0e1ba1c33344fdeb2b31166eaffda103883dd3',
             email: (currentUser ? currentUser.replace(/\s+/g, '').toLowerCase() : 'user') + '@gmail.com',
             amount: Math.round(floatAmount * 100), // Paystack takes amount in kobo
             currency: "NGN",
