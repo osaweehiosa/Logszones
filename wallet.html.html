@@ -20,7 +20,6 @@
         .fade-in { animation: fadeIn 0.5s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Fixed Scrollable Transaction Box */
         #transaction-feed {
             height: 250px;
             overflow-y: auto;
@@ -337,7 +336,6 @@
         renderCartItems();
     }
 
-    // REDIRECTION LOGIC FOR CART
     function checkoutCart() {
         const total = cart.reduce((sum, item) => sum + item.price, 0);
         if (cart.length === 0) return;
@@ -366,7 +364,6 @@
         }
     }
 
-    // REDIRECTION LOGIC FOR SINGLE BUY
     function processPurchase(id, price, title) {
         if (walletBalance < price) {
             alert("❌ Insufficient Funds! Please fund your wallet.");
@@ -403,20 +400,25 @@
         feed.insertAdjacentHTML('afterbegin', item);
     }
 
+    // --- UPDATED FUNDING LOGIC ---
     function payWithPaystack() {
-        let amount = prompt("Enter amount to fund (₦):", "1000");
-        if (!amount || isNaN(amount) || amount <= 0) return;
+        let amountInput = prompt("Enter amount to fund (₦):", "1000");
+        if (!amountInput || isNaN(amountInput) || parseFloat(amountInput) <= 0) return;
         
+        const floatAmount = parseFloat(amountInput);
+
         let handler = PaystackPop.setup({
             key: PAYSTACK_PUBLIC_KEY,
-            email: currentUser + '@logszone.com',
-            amount: Math.round(amount * 100), 
+            email: (currentUser ? currentUser.replace(/\s+/g, '').toLowerCase() : 'user') + '@logszone.com',
+            amount: Math.round(floatAmount * 100), 
             currency: "NGN",
             callback: function(response) {
-                walletBalance += parseFloat(amount);
+                // ADD TO BALANCE
+                walletBalance += floatAmount;
+                // PERSIST & REFRESH DASHBOARD
                 updateUI();
-                logTx('Wallet Deposit', parseFloat(amount), true);
-                alert("Funding Successful!");
+                logTx('Wallet Deposit', floatAmount, true);
+                alert("Funding Successful! Your balance has been updated.");
             },
             onClose: function() {
                 alert('Transaction cancelled.');
