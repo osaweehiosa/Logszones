@@ -6,6 +6,8 @@
     <title>LOGSZONE | Real-Time Wallet</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://js.paystack.co/v1/inline.js"></script> 
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
@@ -116,19 +118,33 @@
                     <span class="text-blue-400">₦<span id="cart-total">0</span></span>
                 </div>
                 <button onclick="checkoutCart()" class="w-full py-4 bg-blue-600 rounded-2xl font-800 hover:bg-blue-500 transition-all">
-                    Pay Now From Balance
+                    Purchase & Contact Admin
                 </button>
             </div>
         </div>
     </div>
 
 <script>
+    // --- FIREBASE CONFIGURATION ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyCcWUN1NBoKcnJnHw1aLYQ4xsJELP2OahU",
+        authDomain: "logszone-marketplace.firebaseapp.com",
+        databaseURL: "https://logszone-marketplace-default-rtdb.firebaseio.com",
+        projectId: "logszone-marketplace",
+        storageBucket: "logszone-marketplace.firebasestorage.app",
+        messagingSenderId: "227518219335",
+        appId: "1:227518219335:web:f286c4c4ce24c8a04b9d62"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
     const PAYSTACK_PUBLIC_KEY = 'pk_test_244010503480c1c30a88bf74b2e7f56642e1fd02'; 
     
     let walletBalance = 0;
     let cart = [];
-    let lastLogsData = ""; // Glitch prevention variable
     const currentUser = localStorage.getItem('currentUser');
+    let adminTelegram = "https://t.me/logszon3"; // Default
 
     const CATEGORIES = [
         { id: "tools", name: "All tools & tutorial update" },
@@ -146,7 +162,6 @@
         { id: "vpn", name: "PAID PREMIUM VPN FOR PHONE" }
     ];
 
-    // UPDATED: Standardized Logo Mapping
     const platformLogos = {
         'tools': 'fa-screwdriver-wrench',
         'fb-random': 'fa-brands fa-facebook',
@@ -163,18 +178,19 @@
         'vpn': 'fa-shield-halved'
     };
 
-    const buyerNames = ["Jake***", "Tunde***", "Alex***", "Gifted***", "Sam***", "Rich***", "Dev***", "Stone***", "Musa***", "Bless***", "Chidi***", "Ugo***", "Zion***", "Rex***", "King***", "Boss***", "Ace***", "Panda***", "Ghost***", "Vibe***", "Swift***", "Bold***", "Max***", "Luke***", "Nuel***", "Dave***", "Favour***", "Josh***", "Ben***", "Sky***"];
-    const productItems = ["Facebook Account", "Instagram Log", "USA HQ FB", "Aged Discord", "TikTok Account", "Premium VPN", "Twitter Ads Log", "Mail Access", "Snapchat Account", "Reddit High Karma"];
-
-    function showPseudoNotification() {
-        const name = buyerNames[Math.floor(Math.random() * buyerNames.length)];
-        const item = productItems[Math.floor(Math.random() * productItems.length)];
-        const el = document.getElementById('pseudo-notification');
-        document.getElementById('pseudo-text').innerText = `${name} bought ${item}`;
-        el.style.display = 'block';
-        setTimeout(() => { el.style.display = 'none'; }, 4000);
+    // Load Cart from LocalStorage based on user
+    function loadCart() {
+        if (currentUser) {
+            const savedCart = localStorage.getItem(`cart_${currentUser}`);
+            cart = savedCart ? JSON.parse(savedCart) : [];
+        }
     }
-    setInterval(showPseudoNotification, 15000);
+
+    function saveCart() {
+        if (currentUser) {
+            localStorage.setItem(`cart_${currentUser}`, JSON.stringify(cart));
+        }
+    }
 
     function saveBalance() {
         if (currentUser) {
@@ -192,61 +208,44 @@
     function updateUI() {
         document.getElementById('wallet-balance').innerText = walletBalance.toLocaleString(undefined, {minimumFractionDigits: 2});
         saveBalance();
-        renderMarketplace();
+        saveCart();
         updateCartDisplay();
     }
 
-    function logTx(label, amount, isDeposit) {
-        const feed = document.getElementById('transaction-feed');
-        const noTrans = document.getElementById('no-trans');
-        if (noTrans) noTrans.remove();
-        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const item = `
-            <div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5 fade-in">
-                <div>
-                    <p class="text-[10px] font-bold text-slate-200">${label}</p>
-                    <p class="text-[8px] text-slate-500">${time}</p>
-                </div>
-                <span class="${isDeposit ? 'text-green-400' : 'text-red-400'} font-bold text-xs">
-                    ${isDeposit ? '+' : '-'}₦${amount.toLocaleString()}
-                </span>
-            </div>
-        `;
-        feed.insertAdjacentHTML('afterbegin', item);
+    // Pull products and settings from Firebase
+    function initFirebaseListeners() {
+        // Listen for products
+        db.ref('products').on('value', (snapshot) => {
+            const data = snapshot.val();
+            const products = data ? Object.values(data) : [];
+            renderMarketplace(products);
+        });
+
+        // Listen for admin telegram link
+        db.ref('settings/telegram').on('value', (snapshot) => {
+            if (snapshot.val()) adminTelegram = snapshot.val();
+        });
     }
 
-    function scrollToCategory(id) {
-        if(!id) return;
-        const element = document.getElementById('cat-section-' + id);
-        if(element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    function renderMarketplace() {
+    function renderMarketplace(products) {
         const container = document.getElementById('logs-container');
         const selector = document.getElementById('categorySelector');
-        const rawLogs = localStorage.getItem('shared_logs') || "[]";
-        
-        // GLITCH FIX: Only re-render if the data is actually different
-        if (rawLogs === lastLogsData && container.innerHTML !== "") return;
-        lastLogsData = rawLogs;
-
-        const logs = JSON.parse(rawLogs);
 
         let selectorHTML = '<option value="">Choose Category...</option>';
         CATEGORIES.forEach(cat => {
-            const count = logs.filter(l => l.platform === cat.id).length;
+            const count = products.filter(l => l.platform === cat.id).length;
             selectorHTML += `<option value="${cat.id}">${cat.name} (${count})</option>`;
         });
         selector.innerHTML = selectorHTML;
 
-        if (logs.length === 0) {
+        if (products.length === 0) {
             container.innerHTML = `<div class="p-12 text-center midnight-card rounded-[2rem] border border-dashed border-slate-800"><p class="text-slate-500">The marketplace is currently empty.</p></div>`;
             return;
         }
 
         let finalHTML = '';
         CATEGORIES.forEach(cat => {
-            const catLogs = logs.filter(l => l.platform === cat.id);
+            const catLogs = products.filter(l => l.platform === cat.id);
             if (catLogs.length > 0) {
                 finalHTML += `
                 <div id="cat-section-${cat.id}" class="pt-4 fade-in">
@@ -257,12 +256,9 @@
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         ${catLogs.map((log) => {
-                            // UPDATED: Correct Logo mapping based on Admin update
                             const iconClass = platformLogos[log.platform] || 'fa-box';
                             const iconPrefix = iconClass.includes('fa-brands') ? '' : 'fas';
                             
-                            const isInCart = cart.some(item => item.id === log.id);
-
                             return `
                                 <div class="midnight-card p-6 rounded-3xl hover:border-blue-500/50 group transition-all duration-300 shadow-lg relative overflow-hidden">
                                     <div class="flex justify-between items-start mb-6">
@@ -277,23 +273,14 @@
                                     <p class="text-slate-400 text-[8px] uppercase font-bold tracking-tighter mb-6">${log.tag || 'Instant Delivery'}</p>
                                     
                                     <div class="flex gap-2">
-                                        <button onclick="addToCart(${log.id}, ${log.price}, '${log.title.replace(/'/g, "\\'")}')" 
-                                                class="flex-1 py-3 bg-slate-800 rounded-xl font-bold text-xs text-white hover:bg-slate-700 transition-all ${isInCart ? 'opacity-50 cursor-not-allowed' : ''}"
-                                                ${isInCart ? 'disabled' : ''}>
-                                            ${isInCart ? 'In Cart' : 'Add To Cart'}
+                                        <button onclick="addToCart('${log.id}', ${log.price}, '${log.title.replace(/'/g, "\\'")}')" 
+                                                class="flex-1 py-3 bg-slate-800 rounded-xl font-bold text-xs text-white hover:bg-slate-700 transition-all">
+                                            Add To Cart
                                         </button>
-                                        <button onclick="processPurchase(${log.id}, ${log.price}, '${log.title.replace(/'/g, "\\'")}')" 
-                                                id="btn-${log.id}"
+                                        <button onclick="processPurchase('${log.id}', ${log.price}, '${log.title.replace(/'/g, "\\'")}')" 
                                                 class="flex-1 py-3 bg-blue-600 rounded-xl font-bold text-xs text-white hover:bg-blue-500 transition-all">
                                             Buy Now
                                         </button>
-                                    </div>
-                                    
-                                    <div id="details-${log.id}" class="hidden mt-4 p-4 bg-green-500/10 border border-green-500/30 rounded-xl text-center">
-                                        <p class="text-[8px] text-green-400 mb-2 uppercase font-bold">Access Link Unlocked</p>
-                                        <a href="${log.data}" target="_blank" class="text-xs text-white font-bold underline flex items-center justify-center gap-2">
-                                            <i class="fab fa-telegram"></i> Message Admin for Log
-                                        </a>
                                     </div>
                                 </div>`;
                         }).join('')}
@@ -301,14 +288,14 @@
                 </div>`;
             }
         });
-        container.innerHTML = finalHTML || `<p class="text-center text-slate-500">No active logs available.</p>`;
+        container.innerHTML = finalHTML;
     }
 
     function addToCart(id, price, title) {
-        if (!cart.some(item => item.id === id)) {
-            cart.push({id, price, title});
-            updateUI();
-        }
+        // Requirement: Add same product more than once
+        cart.push({id, price, title, cartUniqueId: Date.now() + Math.random()});
+        updateUI();
+        alert(`✅ Added ${title} to cart!`);
     }
 
     function toggleCartModal() {
@@ -353,30 +340,30 @@
 
     function removeFromCart(index) {
         cart.splice(index, 1);
-        renderCartItems();
         updateUI();
+        renderCartItems();
     }
 
     function checkoutCart() {
         const total = cart.reduce((sum, item) => sum + item.price, 0);
+        if (cart.length === 0) return;
+        
         if (walletBalance < total) {
             alert("❌ Insufficient balance to pay for cart!");
             return;
         }
+        
         if (confirm(`Checkout ${cart.length} items for ₦${total.toLocaleString()}?`)) {
             walletBalance -= total;
+            cart.forEach(item => logTx(`Bought: ${item.title}`, item.price, false));
             
-            cart.forEach(item => {
-                logTx(`Bought: ${item.title}`, item.price, false);
-                let logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
-                const updatedLogs = logs.filter(l => l.id !== item.id);
-                localStorage.setItem('shared_logs', JSON.stringify(updatedLogs));
-            });
-            
-            alert("✅ Purchase successful! Check transactions for history.");
+            // Empty the cart
             cart = [];
-            toggleCartModal();
             updateUI();
+            toggleCartModal();
+            
+            alert("✅ Payment Successful! Redirecting to Admin for your logs...");
+            window.open(adminTelegram, '_blank');
         }
     }
 
@@ -387,19 +374,30 @@
         }
         if (confirm(`Confirm purchase for ${title}? ₦${price.toLocaleString()} will be deducted.`)) {
             walletBalance -= price;
-            updateUI();
             logTx(`Bought: ${title}`, price, false);
-            
-            document.getElementById(`btn-${id}`).classList.add('hidden');
-            document.getElementById(`details-${id}`).classList.remove('hidden');
-            
-            setTimeout(() => {
-                let logs = JSON.parse(localStorage.getItem('shared_logs')) || [];
-                const updatedLogs = logs.filter(l => l.id !== id);
-                localStorage.setItem('shared_logs', JSON.stringify(updatedLogs));
-                renderMarketplace();
-            }, 10000); 
+            updateUI();
+            alert("✅ Purchase successful! Redirecting to contact admin.");
+            window.open(adminTelegram, '_blank');
         }
+    }
+
+    function logTx(label, amount, isDeposit) {
+        const feed = document.getElementById('transaction-feed');
+        const noTrans = document.getElementById('no-trans');
+        if (noTrans) noTrans.remove();
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const item = `
+            <div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5 fade-in">
+                <div>
+                    <p class="text-[10px] font-bold text-slate-200">${label}</p>
+                    <p class="text-[8px] text-slate-500">${time}</p>
+                </div>
+                <span class="${isDeposit ? 'text-green-400' : 'text-red-400'} font-bold text-xs">
+                    ${isDeposit ? '+' : '-'}₦${amount.toLocaleString()}
+                </span>
+            </div>
+        `;
+        feed.insertAdjacentHTML('afterbegin', item);
     }
 
     function payWithPaystack() {
@@ -407,7 +405,7 @@
         if (!amount || isNaN(amount) || amount <= 0) return;
         let handler = PaystackPop.setup({
             key: PAYSTACK_PUBLIC_KEY,
-            email: 'customer@logszone.com',
+            email: currentUser + '@logszone.com',
             amount: amount * 100, 
             currency: "NGN",
             callback: function(response) {
@@ -423,21 +421,19 @@
         if (!currentUser) {
             window.location.href = 'index.html'; 
         } else {
-            const displayArea = document.getElementById('welcomeMessage');
-            if(displayArea) displayArea.innerText = `Welcome, ${currentUser}`;
+            document.getElementById('welcomeMessage').innerText = `Welcome, ${currentUser}`;
             loadBalance();
+            loadCart();
+            initFirebaseListeners();
         }
         updateUI();
     };
 
-    window.addEventListener('storage', (e) => { 
-        if(e.key === 'shared_logs') {
-            renderMarketplace(); 
-        }
-    });
-
-    // Optimized poll: checks for changes every 5s without causing UI glitches
-    setInterval(() => { renderMarketplace(); }, 5000);
+    function scrollToCategory(id) {
+        if(!id) return;
+        const element = document.getElementById('cat-section-' + id);
+        if(element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 </script>
 </body>
 </html>
