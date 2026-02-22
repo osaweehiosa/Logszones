@@ -140,6 +140,7 @@
     
     let walletBalance = 0;
     let cart = [];
+    let transactions = [];
     const currentUser = localStorage.getItem('currentUser');
     let adminTelegram = "https://t.me/logszon3"; 
 
@@ -198,6 +199,25 @@
         if (currentUser) {
             const savedBalance = localStorage.getItem(`wallet_${currentUser}`);
             walletBalance = savedBalance ? parseFloat(savedBalance) : 0;
+        }
+    }
+
+    function saveTransactions() {
+        if (currentUser) {
+            localStorage.setItem(`tx_${currentUser}`, JSON.stringify(transactions));
+        }
+    }
+
+    function loadTransactions() {
+        if (currentUser) {
+            const savedTx = localStorage.getItem(`tx_${currentUser}`);
+            transactions = savedTx ? JSON.parse(savedTx) : [];
+            const feed = document.getElementById('transaction-feed');
+            if (transactions.length > 0) {
+                const noTrans = document.getElementById('no-trans');
+                if (noTrans) noTrans.remove();
+                feed.innerHTML = transactions.map(tx => renderTxItem(tx.label, tx.amount, tx.isDeposit, tx.time)).join('');
+            }
         }
     }
 
@@ -381,12 +401,8 @@
         }
     }
 
-    function logTx(label, amount, isDeposit) {
-        const feed = document.getElementById('transaction-feed');
-        const noTrans = document.getElementById('no-trans');
-        if (noTrans) noTrans.remove();
-        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const item = `
+    function renderTxItem(label, amount, isDeposit, time) {
+        return `
             <div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5 fade-in">
                 <div>
                     <p class="text-[10px] font-bold text-slate-200">${label}</p>
@@ -397,7 +413,21 @@
                 </span>
             </div>
         `;
-        feed.insertAdjacentHTML('afterbegin', item);
+    }
+
+    function logTx(label, amount, isDeposit) {
+        const feed = document.getElementById('transaction-feed');
+        const noTrans = document.getElementById('no-trans');
+        if (noTrans) noTrans.remove();
+        
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const txData = { label, amount, isDeposit, time };
+        
+        transactions.unshift(txData);
+        if (transactions.length > 20) transactions.pop(); // Keep last 20
+        
+        saveTransactions();
+        feed.insertAdjacentHTML('afterbegin', renderTxItem(label, amount, isDeposit, time));
     }
 
   function payWithPaystack() {
@@ -420,8 +450,8 @@
             currency: "NGN",
             callback: function(response) {
                 walletBalance += floatAmount;
+                logTx('Wallet Deposit', floatAmount, true); // Added fund tracking
                 updateUI();
-                logTx('Wallet Deposit', floatAmount, true);
                 alert("Funding Successful! Reference: " + response.reference);
             },
             onClose: function() {
@@ -443,6 +473,7 @@
             document.getElementById('welcomeMessage').innerText = `Welcome, ${currentUser}`;
             loadBalance();
             loadCart();
+            loadTransactions(); // Load history on refresh
             initFirebaseListeners();
         }
         updateUI();
