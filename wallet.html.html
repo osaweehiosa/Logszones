@@ -408,16 +408,15 @@
         const floatAmount = parseFloat(amountInput);
 
         let handler = PaystackPop.setup({
-            key: 'pk_live_fe0e1ba1c33344fdeb2b31166eaffda103883dd3',
+            key: PAYSTACK_PUBLIC_KEY,
             email: (currentUser ? currentUser.replace(/\s+/g, '').toLowerCase() : 'user') + '@gmail.com',
-            amount: Math.round(floatAmount * 100), 
+            amount: Math.round(floatAmount * 100), // Paystack takes amount in kobo
             currency: "NGN",
             callback: function(response) {
-                // ADD TO BALANCE
+                // This runs after successful payment
                 walletBalance += floatAmount;
-                // PERSIST & REFRESH DASHBOARD
-                updateUI();
-                logTx('Wallet Deposit', floatAmount, true);
+                updateUI(); // Refreshes the balance on screen and saves to localStorage
+                logTx('Wallet Deposit', floatAmount, true); // Adds to recent transactions
                 alert("Funding Successful! Your balance has been updated.");
             },
             onClose: function() {
