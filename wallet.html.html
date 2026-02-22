@@ -400,23 +400,26 @@
         feed.insertAdjacentHTML('afterbegin', item);
     }
 
-    // --- UPDATED FUNDING LOGIC ---
+   // --- UPDATED FUNDING LOGIC WITH EMAIL FIX ---
     function payWithPaystack() {
         let amountInput = prompt("Enter amount to fund (₦):", "1000");
         if (!amountInput || isNaN(amountInput) || parseFloat(amountInput) <= 0) return;
         
         const floatAmount = parseFloat(amountInput);
 
+        // CLEAN THE EMAIL: Remove spaces and handle empty usernames
+        let cleanUser = currentUser ? currentUser.replace(/\s+/g, '').toLowerCase() : "customer";
+        let userEmail = cleanUser + "@gmail.com";
+
         let handler = PaystackPop.setup({
-            key: 'pk_live_fe0e1ba1c33344fdeb2b31166eaffda103883dd3',
-            email: (currentUser ? currentUser.replace(/\s+/g, '').toLowerCase() : 'user') + '@gmail.com',
-            amount: Math.round(floatAmount * 100), // Paystack takes amount in kobo
+            key: PAYSTACK_PUBLIC_KEY,
+            email: userEmail, // Now guaranteed to be a valid format
+            amount: Math.round(floatAmount * 100), 
             currency: "NGN",
             callback: function(response) {
-                // This runs after successful payment
                 walletBalance += floatAmount;
-                updateUI(); // Refreshes the balance on screen and saves to localStorage
-                logTx('Wallet Deposit', floatAmount, true); // Adds to recent transactions
+                updateUI();
+                logTx('Wallet Deposit', floatAmount, true);
                 alert("Funding Successful! Your balance has been updated.");
             },
             onClose: function() {
