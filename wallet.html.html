@@ -116,7 +116,7 @@
                     <span class="text-blue-400">₦<span id="cart-total">0</span></span>
                 </div>
                 <button onclick="checkoutCart()" class="w-full py-4 bg-blue-600 rounded-2xl font-800 hover:bg-blue-500 transition-all">
-                    Purchase & Contact Admin
+                    Purchase
                 </button>
             </div>
         </div>
@@ -403,7 +403,6 @@
   function payWithPaystack() {
     let amountInput = prompt("Enter amount to fund (₦):", "1000");
     
-    // 1. Validation check
     if (!amountInput || isNaN(amountInput) || parseFloat(amountInput) <= 0) {
         alert("Please enter a valid amount.");
         return;
@@ -411,18 +410,8 @@
     
     const floatAmount = parseFloat(amountInput);
     const amountInKobo = Math.round(floatAmount * 100);
-
-    // 2. Email Fix: Paystack MUST have a valid email format. 
-    // We'll use a hardcoded test email first to prove it works.
     const userEmail = "customer@gmail.com"; 
 
-    console.log("Initializing Paystack with:", {
-        key: PAYSTACK_PUBLIC_KEY,
-        email: userEmail,
-        amount: amountInKobo
-    });
-
-    // 3. Setup and Open
     try {
         const handler = PaystackPop.setup({
             key: PAYSTACK_PUBLIC_KEY,
@@ -430,7 +419,6 @@
             amount: amountInKobo,
             currency: "NGN",
             callback: function(response) {
-                // This runs after successful payment
                 walletBalance += floatAmount;
                 updateUI();
                 logTx('Wallet Deposit', floatAmount, true);
