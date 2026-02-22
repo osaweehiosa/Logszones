@@ -394,7 +394,7 @@
             logTx(`Bought: ${title}`, price, false);
             updateUI();
             
-            const message = `hi i am ${currentUser} and i want to buy ${title}, the number of the particular product is 1 and the amount which has already been paid before the redirection is ₦${price.toLocaleString()}`;
+            const message = `hi i am ${currentUser} and i want to buy ${productNames}, the number of the particular product is ${qty} and the amount which has already been paid before the redirection is ₦${paidAmount.toLocaleString()}`;
             
             alert("✅ Purchase successful! Redirecting to contact admin.");
             window.open(`${adminTelegram}?text=${encodeURIComponent(message)}`, '_blank');
